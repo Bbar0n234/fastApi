@@ -17,10 +17,10 @@ def write_data(data, data_dir="main.json"):
         json.dump(data, file)
 
 
-router = APIRouter()
+router = APIRouter(prefix="/person", tags=["Persons"])
 
 
-@router.get("/person/{person_id}")
+@router.get("/{person_id}")
 def get_person_by_id(person_id: Annotated[int, Path(gt=0, lt=1_000_000)]):
     data = read_data()
 
@@ -31,7 +31,7 @@ def get_person_by_id(person_id: Annotated[int, Path(gt=0, lt=1_000_000)]):
     return f"No person with id {person_id}!"
 
 
-@router.post("/person/")
+@router.post("/")
 def add_person(person: Person):
     person_data = {
         "id": person.id,
@@ -46,7 +46,7 @@ def add_person(person: Person):
     return person_data
 
 
-@router.delete("/person/{person_id}")
+@router.delete("/{person_id}")
 def del_person_by_id(person_id: Annotated[int, Path(gt=0, lt=1_000_000)]):
     data = read_data()
 
@@ -57,7 +57,7 @@ def del_person_by_id(person_id: Annotated[int, Path(gt=0, lt=1_000_000)]):
             return person
 
 
-@router.put("/person/{person_id}")
+@router.put("/{person_id}")
 def upd_person_by_id(person_data: Person_data, person_id: Annotated[int, Path(gt=0, lt=1_000_000)]):
     data = read_data()
 
@@ -70,5 +70,7 @@ def upd_person_by_id(person_data: Person_data, person_id: Annotated[int, Path(gt
             write_data(data)
 
             return person
+
+
 
 
