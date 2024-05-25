@@ -1,5 +1,8 @@
 from fastapi import APIRouter
 from schemas import Person, Person_data
+from fastapi import Path
+
+from typing import Annotated
 import json
 
 
@@ -18,7 +21,7 @@ router = APIRouter()
 
 
 @router.get("/person/{person_id}")
-def get_person_by_id(person_id: int):
+def get_person_by_id(person_id: Annotated[int, Path(gt=0, lt=1_000_000)]):
     data = read_data()
 
     for person in data:
@@ -44,7 +47,7 @@ def add_person(person: Person):
 
 
 @router.delete("/person/{person_id}")
-def del_person_by_id(person_id: int):
+def del_person_by_id(person_id: Annotated[int, Path(gt=0, lt=1_000_000)]):
     data = read_data()
 
     for i, person in enumerate(data):
@@ -55,7 +58,7 @@ def del_person_by_id(person_id: int):
 
 
 @router.put("/person/{person_id}")
-def upd_person_by_id(person_id: int, person_data: Person_data):
+def upd_person_by_id(person_data: Person_data, person_id: Annotated[int, Path(gt=0, lt=1_000_000)]):
     data = read_data()
 
     for i, person in enumerate(data):

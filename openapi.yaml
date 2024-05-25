@@ -1,0 +1,112 @@
+openapi: "3.0.0"
+info:
+  title: "Person API"
+  version: "1.0"
+
+paths:
+  /person/{person_id}:
+    get:
+      summary: "Get person by ID"
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 999999
+      responses:
+        '200':
+          description: "Person found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Person"
+        '404':
+          description: "Person not found"
+          content:
+            application/json:
+              schema:
+                type: string
+
+    delete:
+      summary: "Delete person by ID"
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 999999
+      responses:
+        '200':
+          description: "Person deleted"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Person"
+
+  /person/:
+    post:
+      summary: "Add a new person"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Person"
+      responses:
+        '200':
+          description: "Person added successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Person"
+
+    put:
+      summary: "Update person by ID"
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 999999
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PersonData"
+      responses:
+        '200':
+          description: "Person updated"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Person"
+
+components:
+  schemas:
+    Person:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        age:
+          type: integer
+
+    PersonData:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
