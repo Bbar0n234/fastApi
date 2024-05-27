@@ -5,16 +5,26 @@ from fastapi import Path
 from typing import Annotated
 import json
 
-
-def read_data(data_dir="main.json"):
-    with open(data_dir, "r") as file:
-        data = json.load(file)
-    return data
+import psycopg2
 
 
-def write_data(data, data_dir="main.json"):
-    with open(data_dir, "w") as file:
-        json.dump(data, file)
+def connect_to_db(host, user, password, db_name):
+    global connection
+    connection = psycopg2.connect(
+        host=host,
+        user=user,
+        password=password,
+        database=db_name
+    )
+    connection.autocommit = True
+
+
+def select_person_and_fetch(cursor, person_id):
+    cursor.execute(
+        f"SELECT * FROM users WHERE id = {person_id};"
+    )
+
+    return cursor.fetchone()
 
 
 router = APIRouter(prefix="/person", tags=["Persons"])
@@ -22,55 +32,74 @@ router = APIRouter(prefix="/person", tags=["Persons"])
 
 @router.get("/{person_id}")
 def get_person_by_id(person_id: Annotated[int, Path(gt=0, lt=1_000_000)]):
-    data = read_data()
+    with connection.cursor() as cursor:
 
-    for person in data:
-        if person["id"] == person_id:
-            return person
+        result = select_person_and_fetch(cursor, person_id)
 
-    return f"No person with id {person_id}!"
+        if result is None:
+            return f"No person with id {person_id}!"
+        else:
+            result_dict = {}
+            columns = [column[0] for column in cursor.description]
+
+            for i, value in enumerate(result):
+                result_dict.update({columns[i]: value})
+
+            return result_dict
 
 
 @router.post("/")
 def add_person(person: Person):
-    person_data = {
-        "id": person.id,
-        "name": person.name,
-        "age": person.age
-    }
+    with connection.cursor() as cursor:
+        person_id = person.id
 
-    data = read_data()
-    data.append(person_data)
-    write_data(data)
+        cursor.execute(
+            f"INSERT INTO users (id, name, age) VALUES {tuple(vars(person).values())};"
+        )
 
-    return person_data
+        result = select_person_and_fetch(cursor, person_id)
+
+        if result is None:
+            return f"Error with adding person!"
+        else:
+            result_dict = {}
+            columns = [column[0] for column in cursor.description]
+
+            for i, value in enumerate(result):
+                result_dict.update({columns[i]: value})
+
+            return result_dict
 
 
 @router.delete("/{person_id}")
 def del_person_by_id(person_id: Annotated[int, Path(gt=0, lt=1_000_000)]):
-    data = read_data()
+    with connection.cursor() as cursor:
 
-    for i, person in enumerate(data):
-        if person["id"] == person_id:
-            data.pop(i)
-            write_data(data)
-            return person
+        cursor.execute(
+            f"DELETE FROM users WHERE id = {person_id};"
+        )
+
+        result = select_person_and_fetch(cursor, person_id)
+
+        if result is None:
+            return "Person del successfully"
+        else:
+            return "Error with del"
 
 
 @router.put("/{person_id}")
 def upd_person_by_id(person_data: Person_data, person_id: Annotated[int, Path(gt=0, lt=1_000_000)]):
-    data = read_data()
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"UPDATE users SET name = \'{person_data.name}\', age = {person_data.age} WHERE id = {person_id};"
+        )
 
-    for i, person in enumerate(data):
-        if person["id"] == person_id:
-            person["name"] = person_data.name
-            person["age"] = person_data.age
+        result = select_person_and_fetch(cursor, person_id)
 
-            data[i] = person
-            write_data(data)
+        result_dict = {}
+        columns = [column[0] for column in cursor.description]
 
-            return person
+        for i, value in enumerate(result):
+            result_dict.update({columns[i]: value})
 
-
-
-
+        return result_dict
